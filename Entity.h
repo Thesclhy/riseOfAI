@@ -6,7 +6,7 @@
 #include "ShaderProgram.h"
 enum EntityType { PLATFORM, PLAYER, ENEMY  };
 enum PlayerState { REST, CHARGING };
-enum AIType     { WALKER, GUARD            };
+enum AIType     { WALKER, SLIMEGUARD};
 enum AIState    { WALKING, IDLE, ATTACKING };
 
 
@@ -69,6 +69,12 @@ public:
            float animation_time, int animation_frames, int animation_index,
            int animation_cols, int animation_rows, float width, float height,
            EntityType EntityType, PlayerState player_state);
+    Entity(std::vector<GLuint> texture_ids, float speed, glm::vec3 acceleration,
+        float jump_power, std::vector<std::vector<int>> animations,
+        float animation_time, int animation_frames, int animation_index,
+        int animation_cols, int animation_rows, float width, float height,
+        EntityType EntityType, AIType ai_type, AIState ai_state);
+
     ~Entity();
 
     void draw_sprite_from_texture_atlas(ShaderProgram* program, GLuint texture_id, int index);
@@ -93,6 +99,7 @@ public:
     void const jump() { m_is_jumping = true; }
 
     // ————— GETTERS ————— //
+    bool const isJumping() { return m_is_jumping; }
     EntityType const get_entity_type()    const { return m_entity_type;   };
     AIType     const get_ai_type()        const { return m_ai_type;       };
     AIState    const get_ai_state()       const { return m_ai_state;      };
@@ -151,7 +158,17 @@ public:
         m_animation_rows = (int) m_animations[m_player_state].size();
     }
     
-    
+    //moving
+    void const move_right() {
+        m_movement.x += 1.0f;
+    }
+    void const move_left() {
+        m_movement.x -= 1.0f;
+    }
+    /*void const move_right() {
+        m_movement.x += 1.0f;
+    }*/
+
 };
 
 #endif // ENTITY_H

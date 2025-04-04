@@ -20,8 +20,7 @@ void Menu::update(float delta_time)
 }
 
 void Menu::render(ShaderProgram* program)
-{
-    
-    Utility::draw_text(program, font_id, "PRESS ENTER TO START", 0.5f, -0.3f,
-        glm::vec3(-2.5f, 0.0f, 0.0f));
+{   
+    Utility::draw_text(program, font_id, "PRESS ENTER TO START", 0.5f, -0.25f,
+        glm::vec3(-2.3f, 0.0f, 0.0f));
 }

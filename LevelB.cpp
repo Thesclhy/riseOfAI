@@ -48,7 +48,7 @@ void LevelB::initialise()
         texture_ids,               // texture id
         5.0f,                      // speed
         acceleration,              // acceleration
-        5.0f,                      // jumping power
+        4.0f,                      // jumping power
         animations,                // animation index sets
         0.0f,                      // animation time
         4,                         // animation frame amount
@@ -62,7 +62,6 @@ void LevelB::initialise()
     );
 
     m_game_state.player->set_position(glm::vec3(6.0f, 0.0f, 0.0f));
-    m_game_state.player->set_jumping_power(jump_power);
 }
 
 void LevelB::update(float delta_time)

@@ -13,7 +13,7 @@
 #include "ShaderProgram.h"
 #include "Entity.h"
 
-// Parameterized constructor
+// Player Parameterized constructor
 Entity::Entity(std::vector<GLuint> texture_ids, float speed, glm::vec3 acceleration,
                float jump_power, std::vector<std::vector<int>> animations,
                float animation_time, int animation_frames, int animation_index,
@@ -28,7 +28,25 @@ Entity::Entity(std::vector<GLuint> texture_ids, float speed, glm::vec3 accelerat
     m_texture_ids(texture_ids), m_velocity(0.0f), m_width(width), m_height(height),
     m_entity_type(EntityType), m_player_state(player_state)
 {
-    set_player_state(player_state);
+    //set_player_state(player_state);
+}
+
+//Enemy parameterized constructor
+Entity::Entity(std::vector<GLuint> texture_ids, float speed, glm::vec3 acceleration,
+    float jump_power, std::vector<std::vector<int>> animations,
+    float animation_time, int animation_frames, int animation_index,
+    int animation_cols, int animation_rows, float width, float height,
+    EntityType EntityType, AIType ai_type, AIState ai_state) :
+    m_position(0.0f), m_movement(0.0f), m_scale(1.0f, 1.0f, 0.0f), m_model_matrix(1.0f),
+    m_speed(speed), m_acceleration(acceleration), m_jumping_power(jump_power),
+    m_animations(animations),
+    m_animation_cols(animation_cols), m_animation_frames(animation_frames),
+    m_animation_index(animation_index), m_animation_rows(animation_rows),
+    m_animation_indices(nullptr), m_animation_time(animation_time),
+    m_texture_ids(texture_ids), m_velocity(0.0f), m_width(width), m_height(height),
+    m_entity_type(EntityType), m_ai_type(ai_type), m_ai_state(ai_state)
+{
+
 }
 
 
@@ -43,7 +61,7 @@ void Entity::ai_activate(Entity *player)
             ai_walk();
             break;
             
-        case GUARD:
+        case SLIMEGUARD:
             ai_guard(player);
             break;
             
