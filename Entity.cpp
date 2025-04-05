@@ -54,9 +54,18 @@ Entity::Entity(std::vector<GLuint> texture_ids, float speed, glm::vec3 accelerat
 }
 
 //portal parameterized constructor
-Entity::Entity(std::vector<GLuint> texture_ids, float speed, std::vector<std::vector<int>> animations,
+Entity::Entity(std::vector<GLuint> texture_ids, float speed, glm::vec3 acceleration, std::vector<std::vector<int>> animations,
     float animation_time, int animation_frames, int animation_index,
-    int animation_cols, int animation_rows, float width, float height, EntityType EntityType) {
+    int animation_cols, int animation_rows, float width, float height, EntityType EntityType):
+    m_position(0.0f), m_movement(0.0f), m_scale(1.0f, 1.0f, 0.0f), m_model_matrix(1.0f),
+    m_speed(speed), m_acceleration(acceleration),
+    m_animations(animations),
+    m_animation_cols(animation_cols), m_animation_frames(animation_frames),
+    m_animation_index(animation_index), m_animation_rows(animation_rows),
+    m_animation_indices(nullptr), m_animation_time(animation_time),
+    m_texture_ids(texture_ids), m_velocity(0.0f), m_width(width), m_height(height),
+    m_entity_type(EntityType)
+{
 
 }
 
@@ -167,6 +176,10 @@ void const Entity::check_collision_y(Entity *collidable_entities, int collidable
         
         if (check_collision(collidable_entity))
         {
+            if (m_entity_type == CHECKPOINT) {
+                hitted = true;
+                return;
+            }
             float y_distance = fabs(m_position.y - collidable_entity->m_position.y);
             float y_overlap = fabs(y_distance - (m_height / 2.0f) - (collidable_entity->m_height / 2.0f));
             if (m_velocity.y > 0)
@@ -196,13 +209,17 @@ void const Entity::check_collision_x(Entity *collidable_entities, int collidable
         
         if (check_collision(collidable_entity))
         {
+            if (m_entity_type == CHECKPOINT) {
+                hitted = true;
+                return;
+            }
             float x_distance = fabs(m_position.x - collidable_entity->m_position.x);
             float x_overlap = fabs(x_distance - (m_width / 2.0f) - (collidable_entity->m_width / 2.0f));
             if (m_velocity.x > 0 || collidable_entities->get_velocity().x<0)
-            {
+            {              
                 m_position.x     -= x_overlap;
                 m_velocity.x     = -50.0f;
-                decreaLives();
+                //decreaLives();
                 set_hitted(true);
                 // Collision!
                 m_collided_right  = true;
@@ -211,7 +228,7 @@ void const Entity::check_collision_x(Entity *collidable_entities, int collidable
             {
                 m_position.x    += x_overlap;
                 m_velocity.x    = 50.0f;
-                decreaLives();
+                //decreaLives();
                 set_hitted(true);
                 // Collision!
                 m_collided_left  = true;

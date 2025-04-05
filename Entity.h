@@ -4,7 +4,7 @@
 #include "Map.h"
 #include "glm/glm.hpp"
 #include "ShaderProgram.h"
-enum EntityType { PORTAL, PLAYER, ENEMY};
+enum EntityType { CHECKPOINT, PLAYER, ENEMY};
 enum PlayerState { REST, RUN };
 enum AIType     { WALKER, SLIMEGUARD};
 enum AIState    { WALKING, IDLE, ATTACKING };
@@ -45,8 +45,7 @@ private:
     int m_animation_cols;
     int m_animation_frames,
         m_animation_index,
-        m_animation_rows,
-        lives = 3;
+        m_animation_rows;
 
 
     int* m_animation_indices = nullptr;
@@ -79,7 +78,7 @@ public:
         float animation_time, int animation_frames, int animation_index,
         int animation_cols, int animation_rows, float width, float height,
         EntityType EntityType, AIType ai_type, AIState ai_state);
-    Entity(std::vector<GLuint> texture_ids, float speed, std::vector<std::vector<int>> animations,
+    Entity(std::vector<GLuint> texture_ids, float speed, glm::vec3 acceleration, std::vector<std::vector<int>> animations,
         float animation_time, int animation_frames, int animation_index,
         int animation_cols, int animation_rows, float width, float height, EntityType EntityType);
 
@@ -107,7 +106,7 @@ public:
     void const jump() { m_is_jumping = true; }
 
     // ————— GETTERS ————— //
-    int const get_lives() { return lives; }
+    //int const get_lives() { return lives; }
     bool const get_hitted() { return hitted; };
     bool const isJumping() { return m_is_jumping; }
     EntityType const get_entity_type()    const { return m_entity_type;   };
@@ -131,9 +130,9 @@ public:
     void deactivate() { m_is_active = false; };
     // ————— SETTERS ————— //
     void const changeAnimationDirection() { m_scale.x *= -1; };
-    void const set_lives(int new_lives) { lives = new_lives; }
-    int const decreaLives() { return --lives; }
-    int const increaLives() { return ++lives; }
+    //void const set_lives(int new_lives) { lives = new_lives; }
+    //int const decreaLives() { return --lives; }
+    //int const increaLives() { return ++lives; }
     void const set_hitted(bool newHitted) { hitted = newHitted; };
     void const set_entity_type(EntityType new_entity_type)  { m_entity_type = new_entity_type;};
     void const set_ai_type(AIType new_ai_type){ m_ai_type = new_ai_type;};

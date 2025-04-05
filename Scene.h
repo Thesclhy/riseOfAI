@@ -16,6 +16,10 @@
 #include "Entity.h"
 #include "Map.h"
 
+enum state
+{
+    PLAYING, PAUSE, WIN, LOSE
+};
 /**
     Notice that the game's state is now part of the Scene class, not the main file.
 */
@@ -25,7 +29,9 @@ struct GameState
     Map *map;
     Entity *player;
     Entity* enemy[5];
-    
+    Entity* checkpoint;
+    state current_state;
+
     // ————— POINTERS TO OTHER SCENES ————— //
     int next_scene_id;
 };

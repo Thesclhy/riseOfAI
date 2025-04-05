@@ -82,6 +82,8 @@ glm::mat4 g_view_matrix, g_projection_matrix;
 float g_previous_ticks = 0.0f;
 float g_accumulator = 0.0f;
 
+int g_lives = 3;
+
 bool g_is_colliding_bottom = false;
 int curr_scene_index = 0;
 
@@ -215,81 +217,87 @@ void process_input()
         }
         return;
     }
-    // VERY IMPORTANT: If nothing is pressed, we don't want to go anywhere
-    g_curr_scene->get_state().player->set_movement(glm::vec3(0.0f));
-
-    
-    // clear effects at start
-    g_effects->start(NONE);
+    else {
+        // VERY IMPORTANT: If nothing is pressed, we don't want to go anywhere
+        g_curr_scene->get_state().player->set_movement(glm::vec3(0.0f));
 
 
+        // clear effects at start
+        g_effects->start(NONE);
 
-    while (SDL_PollEvent(&event))
-    {
-        switch (event.type) {
-        case SDL_QUIT:
-        case SDL_WINDOWEVENT_CLOSE:
-            g_app_status = TERMINATED;
-            break;
 
-        case SDL_KEYDOWN:
-            switch (event.key.keysym.sym) {
-            case SDLK_q: g_app_status = TERMINATED;     break;
-            case SDLK_RETURN:
-                curr_scene_index += 1;
-                switch_to_scene(g_levels[curr_scene_index]);
+
+        while (SDL_PollEvent(&event))
+        {
+            switch (event.type) {
+            case SDL_QUIT:
+            case SDL_WINDOWEVENT_CLOSE:
+                g_app_status = TERMINATED;
                 break;
+
+            case SDL_KEYDOWN:
+                switch (event.key.keysym.sym) {
+                case SDLK_q: g_app_status = TERMINATED;     break;
+                case SDLK_RETURN:
+                    curr_scene_index += 1;
+                    switch_to_scene(g_levels[curr_scene_index]);
+                    break;
+                default:
+                    break;
+                }
+
             default:
                 break;
             }
-
-        default:
-            break;
         }
-    }
 
-    const Uint8* key_state = SDL_GetKeyboardState(nullptr);
+        const Uint8* key_state = SDL_GetKeyboardState(nullptr);
 
-    if (key_state[SDL_SCANCODE_D]) {
-        /*if (g_curr_scene->get_state().player->get_scale().x < 0) {
-            g_curr_scene->get_state().player->changeAnimationDirection();
-        }*/
-        g_curr_scene->get_state().player->move_right();
-    }
-    else if (key_state[SDL_SCANCODE_A]){
-        //if (!g_curr_scene->get_state().player->get_hitted())
-       /* if (g_curr_scene->get_state().player->get_scale().x > 0) {
-            g_curr_scene->get_state().player->changeAnimationDirection();
-        }*/
-        g_curr_scene->get_state().player->move_left();
-    }
-
-    if (key_state[SDL_SCANCODE_SPACE] || key_state[SDL_SCANCODE_W])
-    {
-        if (g_curr_scene->get_state().player->get_collided_bottom()) {
-            g_curr_scene->get_state().player->jump();
+        if (key_state[SDL_SCANCODE_D]) {
+            /*if (g_curr_scene->get_state().player->get_scale().x < 0) {
+                g_curr_scene->get_state().player->changeAnimationDirection();
+            }*/
+            g_curr_scene->get_state().player->move_right();
         }
-    }
+        else if (key_state[SDL_SCANCODE_A]) {
+            //if (!g_curr_scene->get_state().player->get_hitted())
+           /* if (g_curr_scene->get_state().player->get_scale().x > 0) {
+                g_curr_scene->get_state().player->changeAnimationDirection();
+            }*/
+            g_curr_scene->get_state().player->move_left();
+        }
 
-    if (key_state[SDL_SCANCODE_C])
-    {
-        g_curr_scene->get_state().player->set_player_state(RUN);
-        // start effect
-        //g_effects->start(TREMBLE);
-    }
-    else
-    {
-        //g_curr_scene->get_state().player->set_player_state(REST);
-    }
+        if (key_state[SDL_SCANCODE_SPACE] || key_state[SDL_SCANCODE_W])
+        {
+            if (g_curr_scene->get_state().player->get_collided_bottom()) {
+                g_curr_scene->get_state().player->jump();
+            }
+        }
+
+        if (key_state[SDL_SCANCODE_C])
+        {
+            g_curr_scene->get_state().player->set_player_state(RUN);
+            // start effect
+            //g_effects->start(TREMBLE);
+        }
+        else
+        {
+            //g_curr_scene->get_state().player->set_player_state(REST);
+        }
 
 
-    if (glm::length(g_curr_scene->get_state().player->get_movement()) > 1.0f)
-        g_curr_scene->get_state().player->normalise_movement();
+        if (glm::length(g_curr_scene->get_state().player->get_movement()) > 1.0f)
+            g_curr_scene->get_state().player->normalise_movement();
+    }  
 }
 
 void update()
 {
     if (curr_scene_index == 0) { return; }
+    if (g_curr_scene->get_state().next_scene_id != -1) {
+        switch_to_scene(g_levels[g_curr_scene->get_state().next_scene_id]);
+        curr_scene_index = g_curr_scene->get_state().next_scene_id;
+    }
     float ticks = (float)SDL_GetTicks() / MILLISECONDS_IN_SECOND;
     float delta_time = ticks - g_previous_ticks;
     g_previous_ticks = ticks;
@@ -322,6 +330,7 @@ void update()
             ALL_SFX_CHN,        // Set all channels...
             MIX_MAX_VOLUME / 2  // ...to half volume.
         );
+        --g_lives;
         g_effects->start(TREMBLE);
         g_curr_scene->get_state().player->set_hitted(false);
     }
@@ -351,7 +360,7 @@ void render()
     
     if (curr_scene_index != 0) {
         glm::vec3 play_postion = g_curr_scene->get_state().player->get_position();
-        Utility::draw_text(&g_shader_program, g_font_texture_id, "HP:" + std::to_string(g_curr_scene->get_state().player->get_lives()), 0.5f, -0.25f,
+        Utility::draw_text(&g_shader_program, g_font_texture_id, "HP:" + std::to_string(g_lives), 0.5f, -0.25f,
             glm::vec3(play_postion.x - 0.3f, 1.0f + play_postion.y, 0.0f));
     }
     
