@@ -4,8 +4,8 @@
 #include "Map.h"
 #include "glm/glm.hpp"
 #include "ShaderProgram.h"
-enum EntityType { PLATFORM, PLAYER, ENEMY  };
-enum PlayerState { REST, CHARGING };
+enum EntityType { PORTAL, PLAYER, ENEMY};
+enum PlayerState { REST, RUN };
 enum AIType     { WALKER, SLIMEGUARD};
 enum AIState    { WALKING, IDLE, ATTACKING };
 
@@ -45,7 +45,9 @@ private:
     int m_animation_cols;
     int m_animation_frames,
         m_animation_index,
-        m_animation_rows;
+        m_animation_rows,
+        lives = 3;
+
 
     int* m_animation_indices = nullptr;
     float m_animation_time = 0.0f;
@@ -58,9 +60,12 @@ private:
     bool m_collided_left   = false;
     bool m_collided_right  = false;
 
+    //
+    bool hitted = false;
+
 public:
     // ————— STATIC VARIABLES ————— //
-    static constexpr int SECONDS_PER_FRAME = 4;
+    static constexpr int SECONDS_PER_FRAME = 8;
 
     // ————— METHODS ————— //
     Entity();
@@ -74,6 +79,9 @@ public:
         float animation_time, int animation_frames, int animation_index,
         int animation_cols, int animation_rows, float width, float height,
         EntityType EntityType, AIType ai_type, AIState ai_state);
+    Entity(std::vector<GLuint> texture_ids, float speed, std::vector<std::vector<int>> animations,
+        float animation_time, int animation_frames, int animation_index,
+        int animation_cols, int animation_rows, float width, float height, EntityType EntityType);
 
     ~Entity();
 
@@ -99,6 +107,8 @@ public:
     void const jump() { m_is_jumping = true; }
 
     // ————— GETTERS ————— //
+    int const get_lives() { return lives; }
+    bool const get_hitted() { return hitted; };
     bool const isJumping() { return m_is_jumping; }
     EntityType const get_entity_type()    const { return m_entity_type;   };
     AIType     const get_ai_type()        const { return m_ai_type;       };
@@ -120,6 +130,11 @@ public:
     void activate()   { m_is_active = true;  };
     void deactivate() { m_is_active = false; };
     // ————— SETTERS ————— //
+    void const changeAnimationDirection() { m_scale.x *= -1; };
+    void const set_lives(int new_lives) { lives = new_lives; }
+    int const decreaLives() { return --lives; }
+    int const increaLives() { return ++lives; }
+    void const set_hitted(bool newHitted) { hitted = newHitted; };
     void const set_entity_type(EntityType new_entity_type)  { m_entity_type = new_entity_type;};
     void const set_ai_type(AIType new_ai_type){ m_ai_type = new_ai_type;};
     void const set_ai_state(AIState new_state){ m_ai_state = new_state;};
@@ -155,15 +170,37 @@ public:
             return;
         }
         
-        m_animation_rows = (int) m_animations[m_player_state].size();
+        m_animation_cols = (int) m_animations[m_player_state].size();
+    }
+    void const set_enemy_state(AIState new_ai_state)
+    {
+        m_ai_state = new_ai_state;
+
+        if (!m_animations.empty() && m_animations.size() > m_player_state)
+        {
+            m_animation_indices = m_animations[m_ai_state].data();
+        }
+        else
+        {
+            m_animation_indices = nullptr;
+            return;
+        }
+
+        m_animation_cols = (int)m_animations[m_ai_state].size();
     }
     
     //moving
     void const move_right() {
-        m_movement.x += 1.0f;
+        if (m_scale.x < 0) {
+            changeAnimationDirection();
+        }
+        m_movement.x = 1.0f;
     }
     void const move_left() {
-        m_movement.x -= 1.0f;
+        if (m_scale.x > 0) {
+            changeAnimationDirection();
+        }
+        m_movement.x = -1.0f;
     }
     /*void const move_right() {
         m_movement.x += 1.0f;

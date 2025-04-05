@@ -24,6 +24,7 @@ struct GameState
     // ————— GAME OBJECTS ————— //
     Map *map;
     Entity *player;
+    Entity* enemy[5];
     
     // ————— POINTERS TO OTHER SCENES ————— //
     int next_scene_id;
@@ -32,6 +33,7 @@ struct GameState
 class Scene {
 protected:
     GameState m_game_state;
+    int lives = 3;
     
 public:
     // ————— ATTRIBUTES ————— //

@@ -31,6 +31,16 @@
 #include "Effects.h"
 
 // ����� CONSTANTS ����� //
+constexpr int CD_QUAL_FREQ = 44100,  // compact disk (CD) quality frequency
+AUDIO_CHAN_AMT = 2,
+AUDIO_BUFF_SIZE = 4096;
+
+constexpr int PLAY_ONCE = 0,
+NEXT_CHNL = -1,  // next available channel
+MUTE_VOL = 0,
+MILS_IN_SEC = 1000,
+ALL_SFX_CHN = -1;
+
 constexpr int WINDOW_WIDTH = 1280,
 WINDOW_HEIGHT = 960;
 
@@ -54,6 +64,7 @@ constexpr float MILLISECONDS_IN_SECOND = 1000.0;
 enum AppStatus { RUNNING, TERMINATED };
 
 // ����� GLOBAL VARIABLES ����� //
+GLuint g_font_texture_id;
 Scene* g_curr_scene = nullptr;
 Menu* g_menu = nullptr;
 LevelA* g_levelA = nullptr;
@@ -75,6 +86,14 @@ bool g_is_colliding_bottom = false;
 int curr_scene_index = 0;
 
 AppStatus g_app_status = RUNNING;
+
+constexpr char BGM_FILEPATH[] = "assets/music/bgm.mp3";
+constexpr char BOUNCE_FILEPATH[] = "assets/music/bounce_back.wav";
+constexpr char PAIN_FILEPATH[] = "assets/music/pain.wav";
+constexpr int    LOOP_FOREVER = -1;  // -1 means loop forever in Mix_PlayMusic; 0 means play once and loop zero times
+Mix_Music* g_music;
+Mix_Chunk* g_bouncing_sfx;
+Mix_Chunk* g_pain_sfx;
 
 void switch_to_scene(Scene* scene);
 void initialise();
@@ -120,6 +139,33 @@ void initialise()
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
+
+    // Start Audio
+    Mix_OpenAudio(
+        CD_QUAL_FREQ,        // the frequency to playback audio at (in Hz)
+        MIX_DEFAULT_FORMAT,  // audio format
+        AUDIO_CHAN_AMT,      // number of channels (1 is mono, 2 is stereo, etc).
+        AUDIO_BUFF_SIZE      // audio buffer size in sample FRAMES (total samples divided by channel count)
+    );
+
+    g_bouncing_sfx = Mix_LoadWAV(BOUNCE_FILEPATH);
+    g_pain_sfx = Mix_LoadWAV(PAIN_FILEPATH);
+
+    // Similar to our custom function load_texture
+    g_music = Mix_LoadMUS(BGM_FILEPATH);
+
+    // This will schedule the music object to begin mixing for playback.
+    // The first parameter is the pointer to the mp3 we loaded 
+    // and second parameter is the number of times to loop.
+    Mix_PlayMusic(g_music, LOOP_FOREVER);
+
+    // Set the music to half volume
+    // MIX_MAX_VOLUME is a pre-defined constant
+    Mix_VolumeMusic(MIX_MAX_VOLUME / 2);
+
+    g_font_texture_id = Utility::load_texture("assets/font1.png");
 
     g_menu = new Menu();
     g_levels[0] = g_menu;
@@ -171,6 +217,8 @@ void process_input()
     }
     // VERY IMPORTANT: If nothing is pressed, we don't want to go anywhere
     g_curr_scene->get_state().player->set_movement(glm::vec3(0.0f));
+
+    
     // clear effects at start
     g_effects->start(NONE);
 
@@ -203,9 +251,16 @@ void process_input()
     const Uint8* key_state = SDL_GetKeyboardState(nullptr);
 
     if (key_state[SDL_SCANCODE_D]) {
+        /*if (g_curr_scene->get_state().player->get_scale().x < 0) {
+            g_curr_scene->get_state().player->changeAnimationDirection();
+        }*/
         g_curr_scene->get_state().player->move_right();
     }
     else if (key_state[SDL_SCANCODE_A]){
+        //if (!g_curr_scene->get_state().player->get_hitted())
+       /* if (g_curr_scene->get_state().player->get_scale().x > 0) {
+            g_curr_scene->get_state().player->changeAnimationDirection();
+        }*/
         g_curr_scene->get_state().player->move_left();
     }
 
@@ -218,13 +273,13 @@ void process_input()
 
     if (key_state[SDL_SCANCODE_C])
     {
-        g_curr_scene->get_state().player->set_player_state(CHARGING);
+        g_curr_scene->get_state().player->set_player_state(RUN);
         // start effect
-        g_effects->start(TREMBLE);
+        //g_effects->start(TREMBLE);
     }
     else
     {
-        g_curr_scene->get_state().player->set_player_state(REST);
+        //g_curr_scene->get_state().player->set_player_state(REST);
     }
 
 
@@ -256,6 +311,21 @@ void update()
         delta_time -= FIXED_TIMESTEP;
     }
 
+    if (g_curr_scene->get_state().player->get_hitted())
+    {
+        Mix_PlayChannel(
+            NEXT_CHNL,       // using the first channel that is not currently in use...
+            g_pain_sfx,  // ...play this chunk of audio...
+            PLAY_ONCE        // ...once.
+        );
+        Mix_Volume(
+            ALL_SFX_CHN,        // Set all channels...
+            MIX_MAX_VOLUME / 2  // ...to half volume.
+        );
+        g_effects->start(TREMBLE);
+        g_curr_scene->get_state().player->set_hitted(false);
+    }
+
     g_accumulator = delta_time;
 
     g_view_matrix = glm::mat4(1.0f);
@@ -278,6 +348,13 @@ void render()
 
     // ����� RENDERING THE SCENE (i.e. map, character, enemies...) ����� //
     g_curr_scene->render(&g_shader_program);
+    
+    if (curr_scene_index != 0) {
+        glm::vec3 play_postion = g_curr_scene->get_state().player->get_position();
+        Utility::draw_text(&g_shader_program, g_font_texture_id, "HP:" + std::to_string(g_curr_scene->get_state().player->get_lives()), 0.5f, -0.25f,
+            glm::vec3(play_postion.x - 0.3f, 1.0f + play_postion.y, 0.0f));
+    }
+    
 
     if (g_curr_scene != 0) {
         g_effects->render();
@@ -291,7 +368,13 @@ void shutdown()
     SDL_Quit();
 
     delete g_levelA;
+    delete g_levelB;
+    delete g_levelC;
     delete g_effects;
+    Mix_FreeChunk(g_pain_sfx);
+    Mix_FreeChunk(g_bouncing_sfx);
+    Mix_FreeMusic(g_music);
+
 }
 
 // ����� DRIVER GAME LOOP ����� //

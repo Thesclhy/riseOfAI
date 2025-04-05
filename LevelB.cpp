@@ -32,36 +32,37 @@ void LevelB::initialise()
 
     std::vector<std::vector<int>> animations =
     {
-        { 0, 1, 2, 3, 4, 5 },  // Rest
-        { 0, 1, 2, 3, 4 },     // Charging
+        { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 },  // Rest
+        { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },     // Charging
     };
 
     glm::vec3 acceleration = glm::vec3(0.0f, -4.81f, 0.0f);
 
     std::vector<GLuint> texture_ids =
     {
-        Utility::load_texture("assets/B_witch_idle.png"),
-        Utility::load_texture("assets/B_witch_charge.png")
+        Utility::load_texture("assets/Idle (32x32).png"),
+        Utility::load_texture("assets/Run (32x32).png")
     };
 
     m_game_state.player = new Entity(
         texture_ids,               // texture id
         5.0f,                      // speed
         acceleration,              // acceleration
-        4.0f,                      // jumping power
+        5.0f,                      // jumping power
         animations,                // animation index sets
         0.0f,                      // animation time
-        4,                         // animation frame amount
+        10,                         // animation frame amount
         0,                         // current animation index
-        1,                         // animation column amount
-        6,                         // animation row amount
+        11,                         // animation column amount
+        1,                         // animation row amount
         0.7f,                      // width
-        0.7f,                      // height
+        1.0f,                      // height
         PLAYER,                    // entity type
         REST                       // player state
     );
 
-    m_game_state.player->set_position(glm::vec3(6.0f, 0.0f, 0.0f));
+    m_game_state.player->set_position(glm::vec3(4.0f, 0.0f, 0.0f));
+    m_game_state.player->set_scale(glm::vec3(1.0f, 1.0f, 0.0f));
 }
 
 void LevelB::update(float delta_time)
