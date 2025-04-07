@@ -44,7 +44,7 @@ ALL_SFX_CHN = -1;
 constexpr int WINDOW_WIDTH = 1280,
 WINDOW_HEIGHT = 960;
 
-constexpr float SCALE_VIEW_MATRIX = 0.5;
+constexpr float SCALE_VIEW_MATRIX = 0.3;
 
 constexpr float BG_RED = 27.0f / MAX_RGB,
 BG_BLUE = 43.0f / MAX_RGB,

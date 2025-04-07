@@ -13,9 +13,9 @@ unsigned int LEVELA_DATA[] =
     45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
     45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
     45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
-    45, 45, 45, 45, 1 , 1 , 45, 45, 45, 45, 45, 45, 45, 45,
+    45, 45, 45, 45, 45 ,45, 45, 45, 45, 45, 45, 45, 45, 45,
     45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
-    27, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 44,
+    27, 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1, 44,
     45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
 };
 
@@ -69,41 +69,39 @@ void LevelA::initialise()
         REST                       // player state
     );
 
-    m_game_state.player->set_position(glm::vec3(4.0f, 0.0f, 0.0f));
+    m_game_state.player->set_position(glm::vec3(1.0f, -6.0f, 0.0f));
     m_game_state.player->set_scale(glm::vec3(1.0f, 1.0f, 0.0f));
 
-    std::vector<std::vector<int>> slime_animations =
+    std::vector<std::vector<int>> pig_animations =
     {
-        { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 },  // WALKING
-        { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 },  // IDLE
-        { 0, 1, 2, 3, 4, 5 },     // HIT
+        { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },  // WALKING
+        { 0, 1, 2, 3, 4, 5, 6, 7, 8},  // IDLE
     };
 
-    std::vector<GLuint> slime_texture_ids =
+    std::vector<GLuint> pig_texture_ids =
     {
-        Utility::load_texture("assets/pic/slime/Idle-Run.png"),
-        Utility::load_texture("assets/pic/slime/Idle-Run.png"),
-        Utility::load_texture("assets/pic/slime/Hit.png"),
+        Utility::load_texture("assets/pic/angry_pig/Run (36x30).png"),
+        Utility::load_texture("assets/pic/angry_pig/Idle (36x30).png"),
     };
 
     m_game_state.enemy[0] = new Entity(
-        slime_texture_ids,               // texture id
-        0.3f,                      // speed
+        pig_texture_ids,               // texture id
+        3.0f,                      // speed
         acceleration,              // acceleration
         5.0f,                      // jumping power
-        slime_animations,                // animation index sets
+        pig_animations,                // animation index sets
         0.0f,                      // animation time
-        10,                         // animation frame amount
+        12,                         // animation frame amount
         0,                         // current animation index
-        10,                         // animation column amount
+        12,                         // animation column amount
         1,                         // animation row amount
         0.7f,                      // width
         0.7f,                      // height
         ENEMY,                     // entity type
-        SLIMEGUARD,                // ai type
-        IDLE                       // ai state
+        RUNNER,                    // ai type
+        WALKING                       // ai state
     );
-    m_game_state.enemy[0]->set_position(glm::vec3(8.0f, 0.0f, 0.0f));
+    m_game_state.enemy[0]->set_position(glm::vec3(14.0f, -6.0f, 0.0f));
 
     std::vector<std::vector<int>> checkpoint_animations =
     {

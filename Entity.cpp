@@ -76,13 +76,15 @@ void Entity::ai_activate(Entity *player)
 {
     switch (m_ai_type)
     {
-        case WALKER:
+        case RUNNER:
             ai_walk();
             break;
             
         case SLIMEGUARD:
             ai_guard(player);
             break;
+        case FLYER:
+            ai_flying_around();
             
         default:
             break;
@@ -92,7 +94,7 @@ void Entity::ai_activate(Entity *player)
 
 void Entity::ai_walk()
 {
-    m_movement = glm::vec3(-1.0f, 0.0f, 0.0f);
+    m_movement = glm::vec3(-1.0f*moving_dir_factor, 0.0f, 0.0f);
 }
 
 
@@ -119,6 +121,28 @@ void Entity::ai_guard(Entity *player)
         default:
             break;
     }
+}
+
+void Entity::ai_flying_around() 
+{
+    if (m_position.x > (INIT_POSITION.x + MAX_BOUND_MOVING.x))
+    {   
+        moving_dir_factor *= -1;
+        m_position.x = INIT_POSITION.x + MAX_BOUND_MOVING.x;
+    }
+    if (m_position.x < (INIT_POSITION.x - MAX_BOUND_MOVING.x))
+    {
+        moving_dir_factor *= -1;
+        m_position.x = INIT_POSITION.x - MAX_BOUND_MOVING.x;
+    }
+    if (moving_dir_factor > 0)
+    {
+        move_right();
+    }
+    else {
+        move_left();
+    }
+
 }
 
 
@@ -305,12 +329,24 @@ void const Entity::check_collision_x(Map *map)
     
     if (map->is_solid(left, &penetration_x, &penetration_y) && m_velocity.x < 0)
     {
+        if (m_entity_type == ENEMY) {
+            if (m_ai_type == RUNNER) {
+                moving_dir_factor *= -1;
+                m_scale.x *= -1;
+            }
+        }
         m_position.x += penetration_x;
         m_velocity.x = 0;
         m_collided_left = true;
     }
     if (map->is_solid(right, &penetration_x, &penetration_y) && m_velocity.x > 0)
     {
+        if (m_entity_type == ENEMY) {
+            if (m_ai_type == RUNNER) {
+                moving_dir_factor *= -1;
+                m_scale.x *= -1;
+            }
+        }
         m_position.x -= penetration_x;
         m_velocity.x = 0;
         m_collided_right = true;
@@ -379,6 +415,7 @@ void Entity::update(float delta_time, Entity *player, Entity *collidable_entitie
     if (m_collided_bottom) {
         hitted = false;
     }*/
+    //m_scale.x *= moving_dir_factor;
 
     m_model_matrix = glm::mat4(1.0f);
     m_model_matrix = glm::translate(m_model_matrix, m_position);

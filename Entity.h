@@ -6,8 +6,8 @@
 #include "ShaderProgram.h"
 enum EntityType { CHECKPOINT, PLAYER, ENEMY};
 enum PlayerState { REST, RUN };
-enum AIType     { WALKER, SLIMEGUARD};
-enum AIState    { WALKING, IDLE, ATTACKING };
+enum AIType     { RUNNER, SLIMEGUARD, FLYER};
+enum AIState    { WALKING, IDLE, ATTACKING, ANGTY_RUN };
 
 
 enum AnimationDirection { LEFT, RIGHT, UP, DOWN };
@@ -61,6 +61,10 @@ private:
 
     //
     bool hitted = false;
+    int moving_dir_factor = 1;
+    float cumulate_position = 0.0f;
+    glm::vec3 MAX_BOUND_MOVING = glm::vec3(4.0f, 0.0f, 0.0f);
+    glm::vec3 INIT_POSITION;
 
 public:
     // ————— STATIC VARIABLES ————— //
@@ -99,6 +103,7 @@ public:
 
     void ai_activate(Entity *player);
     void ai_walk();
+    void ai_flying_around();
     void ai_guard(Entity *player);
     
     void normalise_movement() { m_movement = glm::normalize(m_movement); }
@@ -153,6 +158,7 @@ public:
     void const set_jumping_power(float new_jumping_power) { m_jumping_power = new_jumping_power;}
     void const set_width(float new_width) {m_width = new_width; }
     void const set_height(float new_height) {m_height = new_height; }
+    void const set_init_position(glm::vec3 int_pos) { INIT_POSITION = int_pos; }
     void const set_animations(std::vector<std::vector<int>> new_animations)
         { m_animations = new_animations; }
     void const set_player_state(PlayerState new_player_state)
