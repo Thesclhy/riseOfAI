@@ -192,11 +192,11 @@ bool const Entity::check_collision(Entity* other) const
     return x_distance < 0.0f && y_distance < 0.0f;
 }
 
-void const Entity::check_collision_y(Entity *collidable_entities, int collidable_entity_count)
+void const Entity::check_collision_y(Entity **collidable_entities, int collidable_entity_count)
 {
     for (int i = 0; i < collidable_entity_count; i++)
     {
-        Entity *collidable_entity = &collidable_entities[i];
+        Entity *collidable_entity = collidable_entities[i];
         
         if (check_collision(collidable_entity))
         {
@@ -210,7 +210,7 @@ void const Entity::check_collision_y(Entity *collidable_entities, int collidable
             {
                 m_position.y   -= y_overlap;
                 m_velocity.y    = 0.0f;
-                hitted = false;
+                //hitted = false;
                 // Collision!
                 m_collided_top  = true;
             } else if (m_velocity.y < 0)
@@ -225,11 +225,11 @@ void const Entity::check_collision_y(Entity *collidable_entities, int collidable
     }
 }
 
-void const Entity::check_collision_x(Entity *collidable_entities, int collidable_entity_count)
+void const Entity::check_collision_x(Entity **collidable_entities, int collidable_entity_count)
 {
     for (int i = 0; i < collidable_entity_count; i++)
     {
-        Entity *collidable_entity = &collidable_entities[i];
+        Entity *collidable_entity = collidable_entities[i];
         
         if (check_collision(collidable_entity))
         {
@@ -239,7 +239,7 @@ void const Entity::check_collision_x(Entity *collidable_entities, int collidable
             }
             float x_distance = fabs(m_position.x - collidable_entity->m_position.x);
             float x_overlap = fabs(x_distance - (m_width / 2.0f) - (collidable_entity->m_width / 2.0f));
-            if (m_velocity.x > 0 || collidable_entities->get_velocity().x<0)
+            if (m_velocity.x > 0 || collidable_entity->get_velocity().x<0)
             {              
                 m_position.x     -= x_overlap;
                 m_velocity.x     = -50.0f;
@@ -248,7 +248,7 @@ void const Entity::check_collision_x(Entity *collidable_entities, int collidable
                 // Collision!
                 m_collided_right  = true;
 
-            } else if (m_velocity.x < 0 || collidable_entities->get_velocity().x > 0)
+            } else if (m_velocity.x < 0 || collidable_entity->get_velocity().x > 0)
             {
                 m_position.x    += x_overlap;
                 m_velocity.x    = 50.0f;
@@ -352,7 +352,7 @@ void const Entity::check_collision_x(Map *map)
         m_collided_right = true;
     }
 }
-void Entity::update(float delta_time, Entity *player, Entity *collidable_entities, int collidable_entity_count, Map *map)
+void Entity::update(float delta_time, Entity *player, Entity **collidable_entities, int collidable_entity_count, Map *map)
 {
     if (!m_is_active) return;
 

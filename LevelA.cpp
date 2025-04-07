@@ -7,16 +7,16 @@
 
 unsigned int LEVELA_DATA[] =
 {
-    45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
-    45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
-    45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
-    45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
-    45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
-    45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
-    45, 45, 45, 45, 45 ,45, 45, 45, 45, 45, 45, 45, 45, 45,
-    45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
-    27, 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1, 44,
-    45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
+    47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
+    47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
+    47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
+    47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
+    47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
+    47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
+    47, 47, 47, 47, 47 ,47, 47, 47, 47, 47, 47, 47, 47, 47,
+    47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
+    42, 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 44,
+    47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
 };
 
 
@@ -25,7 +25,7 @@ LevelA::~LevelA()
     delete m_game_state.player;
     delete m_game_state.map;
     for (int i = 0; i < ENEMY_AMOUNT; ++i) {
-        delete m_game_state.enemy[i];      // delete each Entity*
+        delete &m_game_state.enemy[i];      // delete each Entity*
     }
     delete m_game_state.checkpoint;
 }
@@ -84,6 +84,8 @@ void LevelA::initialise()
         Utility::load_texture("assets/pic/angry_pig/Idle (36x30).png"),
     };
 
+    m_game_state.enemy = new Entity * [ENEMY_AMOUNT];
+
     m_game_state.enemy[0] = new Entity(
         pig_texture_ids,               // texture id
         3.0f,                      // speed
@@ -139,7 +141,7 @@ void LevelA::update(float delta_time)
     if (m_game_state.checkpoint->get_hitted()) {
         m_game_state.next_scene_id = 2;
     }
-    m_game_state.player->update(delta_time, m_game_state.player, m_game_state.enemy[0], 1,
+    m_game_state.player->update(delta_time, m_game_state.player, m_game_state.enemy, 1,
                                 m_game_state.map);
 
     for (size_t i = 0; i < ENEMY_AMOUNT; i++)
@@ -148,7 +150,7 @@ void LevelA::update(float delta_time)
             m_game_state.map);
     }
 
-    m_game_state.checkpoint->update(delta_time, m_game_state.checkpoint, m_game_state.player, 1,
+    m_game_state.checkpoint->update(delta_time, m_game_state.checkpoint, &m_game_state.player, 1,
         m_game_state.map);
     
     //if (m_game_state.player->get_position().y < -10.0f) m_game_state.next_scene_id = 1;

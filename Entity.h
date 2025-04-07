@@ -63,7 +63,7 @@ private:
     bool hitted = false;
     int moving_dir_factor = 1;
     float cumulate_position = 0.0f;
-    glm::vec3 MAX_BOUND_MOVING = glm::vec3(4.0f, 0.0f, 0.0f);
+    glm::vec3 MAX_BOUND_MOVING = glm::vec3(3.0f, 0.0f, 0.0f);
     glm::vec3 INIT_POSITION;
 
 public:
@@ -91,14 +91,14 @@ public:
     void draw_sprite_from_texture_atlas(ShaderProgram* program, GLuint texture_id, int index);
     bool const check_collision(Entity* other) const;
     
-    void const check_collision_y(Entity* collidable_entities, int collidable_entity_count);
-    void const check_collision_x(Entity* collidable_entities, int collidable_entity_count);
+    void const check_collision_y(Entity** collidable_entities, int collidable_entity_count);
+    void const check_collision_x(Entity** collidable_entities, int collidable_entity_count);
     
     // Overloading our methods to check for only the map
     void const check_collision_y(Map *map);
     void const check_collision_x(Map *map);
     
-    void update(float delta_time, Entity *player, Entity *collidable_entities, int collidable_entity_count, Map *map);
+    void update(float delta_time, Entity *player, Entity **collidable_entities, int collidable_entity_count, Map *map);
     void render(ShaderProgram* program);
 
     void ai_activate(Entity *player);

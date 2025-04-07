@@ -9,28 +9,29 @@
 unsigned int LEVELB_DATA[] =
 {
     3 , 4 , 4 , 4 , 4 , 4 , 4 , 4 , 4 , 4 , 4 , 4 , 4 , 5 ,
-    15, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 17,
-    15, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 17,
-    15, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 17,
-    15, 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 ,  1, 45, 45, 45, 17,
-    15, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 17,
-    15, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 17,
-    15, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 17,
-    15, 45, 45, 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 29,
-    15, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
-    15, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
-    15, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
-    15, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
-    27, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    15, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 17,
+    15, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 17,
+    15, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 17,
+    15, 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 47, 47, 47, 17,
+    15, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 17,
+    15, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 17,
+    15, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 17,
+    15, 47, 47, 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 29,
+    15, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
+    15, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
+    15, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
+    15, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
+    27, 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 ,
 };
 
 LevelB::~LevelB()
 {
     delete m_game_state.player;
     delete m_game_state.map;
-    for (int i = 0; i < ENEMY_AMOUNT; ++i) {
-        delete m_game_state.enemy[i];      // delete each Entity*
-    }
+    delete[] m_game_state.enemy;
+    //for (int i = 0; i < ENEMY_AMOUNT; ++i) {
+    //    delete[] m_game_state.enemy[i];      // delete each Entity*
+    //}
     delete m_game_state.checkpoint;
 }
 
@@ -56,6 +57,7 @@ void LevelB::initialise()
         Utility::load_texture("assets/pic/player/Run (32x32).png")
     };
 
+    m_game_state.enemy = new Entity * [ENEMY_AMOUNT];
     m_game_state.player = new Entity(
         texture_ids,               // texture id
         5.0f,                      // speed
@@ -176,16 +178,16 @@ void LevelB::update(float delta_time)
         m_game_state.next_scene_id = 3;
     }
    
+    m_game_state.player->update(delta_time, m_game_state.player, m_game_state.enemy, 2,
+        m_game_state.map);
 
     for (size_t i = 0; i < ENEMY_AMOUNT; i++)
-    {
-        m_game_state.player->update(delta_time, m_game_state.player, m_game_state.enemy[i], 2,
-            m_game_state.map);
+    {      
         m_game_state.enemy[i]->update(delta_time, m_game_state.player, nullptr, 0,
             m_game_state.map);
     }
 
-    m_game_state.checkpoint->update(delta_time, m_game_state.checkpoint, m_game_state.player, 1,
+    m_game_state.checkpoint->update(delta_time, m_game_state.checkpoint, &m_game_state.player, 1,
         m_game_state.map);
 
     //if (m_game_state.player->get_position().y < -10.0f) m_game_state.next_scene_id = 0;
