@@ -396,6 +396,9 @@ void update()
         g_curr_scene->get_state().player->set_hitted(false);
     }
 
+    if (g_curr_scene->get_state().player->get_position().y < -35.0f)
+        g_player_game_status = LOSE;
+
     g_accumulator = delta_time;
 
     g_view_matrix = glm::mat4(1.0f);
