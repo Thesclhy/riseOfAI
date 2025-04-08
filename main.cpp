@@ -61,7 +61,8 @@ F_SHADER_PATH[] = "shaders/fragment_textured.glsl";
 
 constexpr float MILLISECONDS_IN_SECOND = 1000.0;
 
-enum AppStatus { RUNNING, TERMINATED };
+enum AppStatus { RUNNING, TERMINATED};
+enum PlayerGameStatus { PLAYING, PAUSE, WIN, LOSE };
 
 // ����� GLOBAL VARIABLES ����� //
 GLuint g_font_texture_id;
@@ -80,6 +81,7 @@ ShaderProgram g_shader_program;
 glm::mat4 g_view_matrix, g_projection_matrix;
 
 float g_previous_ticks = 0.0f;
+
 float g_accumulator = 0.0f;
 
 int g_lives = 3;
@@ -88,14 +90,17 @@ bool g_is_colliding_bottom = false;
 int curr_scene_index = 0;
 
 AppStatus g_app_status = RUNNING;
+PlayerGameStatus g_player_game_status;
 
 constexpr char BGM_FILEPATH[] = "assets/music/bgm.mp3";
-constexpr char BOUNCE_FILEPATH[] = "assets/music/bounce_back.wav";
+constexpr char JUMP_FILEPATH[] = "assets/music/jump.wav";
 constexpr char PAIN_FILEPATH[] = "assets/music/pain.wav";
+constexpr char SHINE_FILEPATH[] = "assets/music/shine.wav";
 constexpr int    LOOP_FOREVER = -1;  // -1 means loop forever in Mix_PlayMusic; 0 means play once and loop zero times
 Mix_Music* g_music;
-Mix_Chunk* g_bouncing_sfx;
+Mix_Chunk* g_jump_sfx;
 Mix_Chunk* g_pain_sfx;
+Mix_Chunk* g_shine_sfx;
 
 void switch_to_scene(Scene* scene);
 void initialise();
@@ -106,8 +111,14 @@ void shutdown();
 
 void switch_to_scene(Scene* scene)
 {
+    g_player_game_status = PLAYING;
+    g_view_matrix = glm::mat4(1.0f);
+    g_projection_matrix = glm::ortho(-3.75f, 3.75f, -2.8125f, 2.8125f, -1.0f, 1.0f);
+    g_shader_program.set_projection_matrix(g_projection_matrix);
+    g_shader_program.set_view_matrix(g_view_matrix);
     g_curr_scene = scene;
     g_curr_scene->initialise();
+    g_previous_ticks = (float)SDL_GetTicks() / MILLISECONDS_IN_SECOND;
 }
 
 void initialise()
@@ -151,9 +162,16 @@ void initialise()
         AUDIO_CHAN_AMT,      // number of channels (1 is mono, 2 is stereo, etc).
         AUDIO_BUFF_SIZE      // audio buffer size in sample FRAMES (total samples divided by channel count)
     );
+    Mix_AllocateChannels(32); 
 
-    g_bouncing_sfx = Mix_LoadWAV(BOUNCE_FILEPATH);
+    g_jump_sfx = Mix_LoadWAV(JUMP_FILEPATH);
     g_pain_sfx = Mix_LoadWAV(PAIN_FILEPATH);
+    g_shine_sfx = Mix_LoadWAV(SHINE_FILEPATH);
+
+    Mix_VolumeChunk(
+        g_jump_sfx,     // Set the volume of the bounce sound...
+        MIX_MAX_VOLUME / 64  // ... to 1/4th.
+    );
 
     // Similar to our custom function load_texture
     g_music = Mix_LoadMUS(BGM_FILEPATH);
@@ -165,7 +183,7 @@ void initialise()
 
     // Set the music to half volume
     // MIX_MAX_VOLUME is a pre-defined constant
-    Mix_VolumeMusic(MIX_MAX_VOLUME / 2);
+    Mix_VolumeMusic(MIX_MAX_VOLUME / 4);
 
     g_font_texture_id = Utility::load_texture("assets/font1.png");
 
@@ -203,8 +221,9 @@ void process_input()
                 switch (event.key.keysym.sym) {
                 case SDLK_q: g_app_status = TERMINATED;     break;
                 case SDLK_RETURN:
-                    curr_scene_index += 1;
+                    curr_scene_index = 1;
                     switch_to_scene(g_levels[curr_scene_index]);
+                    g_effects->start(FADEIN, 0.8f);
                     break;
 
                 default:
@@ -223,8 +242,7 @@ void process_input()
 
 
         // clear effects at start
-        g_effects->start(NONE);
-
+        //g_effects->start(NONE);
 
 
         while (SDL_PollEvent(&event))
@@ -238,10 +256,33 @@ void process_input()
             case SDL_KEYDOWN:
                 switch (event.key.keysym.sym) {
                 case SDLK_q: g_app_status = TERMINATED;     break;
-                case SDLK_RETURN:
+                //test use
+                case SDLK_1:
                     curr_scene_index += 1;
+                    if (curr_scene_index >= 4) {
+                        curr_scene_index -= 1;
+                        g_player_game_status = WIN;
+                        break;
+                    }
                     switch_to_scene(g_levels[curr_scene_index]);
                     break;
+
+                case SDLK_r:
+                    if (g_player_game_status == WIN || g_player_game_status == LOSE)
+                    {
+                        g_player_game_status == PLAYING;
+                        curr_scene_index = 0;
+                        g_lives = 3;
+                        switch_to_scene(g_levels[curr_scene_index]);
+                        //g_effects->start(FADEIN, 0.8f);
+                    }
+                    else if (g_player_game_status == PAUSE) {
+                        g_previous_ticks = (float)SDL_GetTicks() / MILLISECONDS_IN_SECOND;
+                        g_player_game_status = PLAYING;
+                    }
+                    else{
+                        g_player_game_status = PAUSE;
+                    }
                 default:
                     break;
                 }
@@ -253,51 +294,75 @@ void process_input()
 
         const Uint8* key_state = SDL_GetKeyboardState(nullptr);
 
-        if (key_state[SDL_SCANCODE_D]) {
-            /*if (g_curr_scene->get_state().player->get_scale().x < 0) {
-                g_curr_scene->get_state().player->changeAnimationDirection();
-            }*/
-            g_curr_scene->get_state().player->move_right();
-        }
-        else if (key_state[SDL_SCANCODE_A]) {
-            //if (!g_curr_scene->get_state().player->get_hitted())
-           /* if (g_curr_scene->get_state().player->get_scale().x > 0) {
-                g_curr_scene->get_state().player->changeAnimationDirection();
-            }*/
-            g_curr_scene->get_state().player->move_left();
-        }
-
-        if (key_state[SDL_SCANCODE_SPACE] || key_state[SDL_SCANCODE_W])
-        {
-            if (g_curr_scene->get_state().player->get_collided_bottom()) {
-                g_curr_scene->get_state().player->jump();
+        
+        if (curr_scene_index != 0) {
+            if (key_state[SDL_SCANCODE_D]) {
+                /*if (g_curr_scene->get_state().player->get_scale().x < 0) {
+                    g_curr_scene->get_state().player->changeAnimationDirection();
+                }*/
+                g_curr_scene->get_state().player->move_right();
             }
-        }
+            else if (key_state[SDL_SCANCODE_A]) {
+                g_curr_scene->get_state().player->move_left();
+            }
 
-        if (key_state[SDL_SCANCODE_C])
-        {
-            g_curr_scene->get_state().player->set_player_state(RUN);
-            // start effect
-            //g_effects->start(TREMBLE);
-        }
-        else
-        {
-            //g_curr_scene->get_state().player->set_player_state(REST);
-        }
+            if (key_state[SDL_SCANCODE_SPACE] || key_state[SDL_SCANCODE_W])
+            {
+                if (g_curr_scene->get_state().player->get_collided_bottom()) {
+                    Mix_PlayChannel(
+                    NEXT_CHNL,       // using the first channel that is not currently in use...
+                    g_jump_sfx,  // ...play this chunk of audio...
+                    PLAY_ONCE        // ...once.
+                );
+                    g_curr_scene->get_state().player->jump();
+                }
+            }
 
+            if (key_state[SDL_SCANCODE_C])
+            {
+                //g_curr_scene->get_state().player->set_player_state(RUN);
+                // start effect
+            }
 
-        if (glm::length(g_curr_scene->get_state().player->get_movement()) > 1.0f)
-            g_curr_scene->get_state().player->normalise_movement();
+            if (glm::length(g_curr_scene->get_state().player->get_movement()) > 1.0f)
+                g_curr_scene->get_state().player->normalise_movement();
+        }     
     }  
 }
 
 void update()
 {
-    if (curr_scene_index == 0) { return; }
-    if (g_curr_scene->get_state().next_scene_id != -1) {
-        switch_to_scene(g_levels[g_curr_scene->get_state().next_scene_id]);
-        curr_scene_index = g_curr_scene->get_state().next_scene_id;
+    if (curr_scene_index == 0 || g_player_game_status == WIN || g_player_game_status == LOSE) { return; }
+
+    if (g_lives <= 0)
+    {
+        g_lives = 0;
+        g_player_game_status = LOSE;
+        return;
     }
+
+    if (g_curr_scene->get_state().next_scene_id != -1) {
+        curr_scene_index = g_curr_scene->get_state().next_scene_id;
+        if (curr_scene_index >= 4) {
+            g_player_game_status = WIN;
+            Mix_PlayChannel(
+                NEXT_CHNL,       // using the first channel that is not currently in use...
+                g_shine_sfx,  // ...play this chunk of audio...
+                PLAY_ONCE        // ...once.
+            );
+            return;
+            //curr_scene_index = 0;           
+        }
+        //g_effects->start(FADEIN);
+        g_effects->start(FADEIN, 0.8f);
+        switch_to_scene(g_levels[curr_scene_index]);
+        Mix_PlayChannel(
+            NEXT_CHNL,       // using the first channel that is not currently in use...
+            g_shine_sfx,  // ...play this chunk of audio...
+            PLAY_ONCE        // ...once.
+        );
+    }
+    //g_effects->start(FADEIN);
     float ticks = (float)SDL_GetTicks() / MILLISECONDS_IN_SECOND;
     float delta_time = ticks - g_previous_ticks;
     g_previous_ticks = ticks;
@@ -326,12 +391,8 @@ void update()
             g_pain_sfx,  // ...play this chunk of audio...
             PLAY_ONCE        // ...once.
         );
-        Mix_Volume(
-            ALL_SFX_CHN,        // Set all channels...
-            MIX_MAX_VOLUME / 2  // ...to half volume.
-        );
         --g_lives;
-        g_effects->start(TREMBLE);
+        //g_effects->start(TREMBLE);
         g_curr_scene->get_state().player->set_hitted(false);
     }
 
@@ -345,7 +406,7 @@ void update()
     );
 
     // translate matrix
-    g_view_matrix = glm::translate(g_view_matrix, g_effects->get_tremble_offset());
+    //g_view_matrix = glm::translate(g_view_matrix, g_effects->get_tremble_offset());
     g_view_matrix = glm::scale(g_view_matrix, glm::vec3(SCALE_VIEW_MATRIX, SCALE_VIEW_MATRIX, 0.0f));
 }
 
@@ -359,10 +420,36 @@ void render()
     g_curr_scene->render(&g_shader_program);
     
     if (curr_scene_index != 0) {
-        glm::vec3 play_postion = g_curr_scene->get_state().player->get_position();
+        glm::vec3 player_position = g_curr_scene->get_state().player->get_position();
         Utility::draw_text(&g_shader_program, g_font_texture_id, "HP:" + std::to_string(g_lives), 0.5f, -0.25f,
-            glm::vec3(play_postion.x - 0.3f, 1.0f + play_postion.y, 0.0f));
+            glm::vec3(player_position.x - 0.3f, 1.0f + player_position.y, 0.0f));
+
+        if (g_player_game_status == WIN)
+        {
+            glm::vec3 player_position = g_curr_scene->get_state().player->get_position();
+            Utility::draw_text(&g_shader_program, g_font_texture_id, "YOU WIN", 2.0f, -0.25f,
+                glm::vec3(player_position.x-5.0f, 1.5f + player_position.y, 0.0f));
+            Utility::draw_text(&g_shader_program, g_font_texture_id, "press R back to menu", 1.0f, -0.40f,
+                glm::vec3(player_position.x - 5.0f, player_position.y, 0.0f));
+        }
+        else if (g_player_game_status == LOSE)
+        {
+            glm::vec3 player_position = g_curr_scene->get_state().player->get_position();
+            Utility::draw_text(&g_shader_program, g_font_texture_id, "YOU LOSE", 2.0f, -0.25f,
+                glm::vec3(player_position.x - 5.0f, 1.5f + player_position.y, 0.0f));
+            Utility::draw_text(&g_shader_program, g_font_texture_id, "press R back to menu", 1.0f, -0.40f,
+                glm::vec3(player_position.x - 5.0f, player_position.y, 0.0f));
+        }
+        else if (g_player_game_status == PAUSE)
+        {
+            glm::vec3 player_position = g_curr_scene->get_state().player->get_position();
+            Utility::draw_text(&g_shader_program, g_font_texture_id, "PAUSE", 2.0f, -0.25f,
+                glm::vec3(player_position.x - 3.0f, 1.5f + player_position.y, 0.0f));
+            Utility::draw_text(&g_shader_program, g_font_texture_id, "press R to continue", 1.0f, -0.40f,
+                glm::vec3(player_position.x - 5.0f, player_position.y, 0.0f));
+        }
     }
+    
     
 
     if (g_curr_scene != 0) {
@@ -381,7 +468,7 @@ void shutdown()
     delete g_levelC;
     delete g_effects;
     Mix_FreeChunk(g_pain_sfx);
-    Mix_FreeChunk(g_bouncing_sfx);
+    Mix_FreeChunk(g_jump_sfx);
     Mix_FreeMusic(g_music);
 
 }
@@ -394,11 +481,10 @@ int main(int argc, char* argv[])
     while (g_app_status == RUNNING)
     {
         process_input();
-        update();
-
-        //        if (g_curr_scene->get_state().next_scene_id >= 0)
-        //            switch_to_scene(g_levels[g_curr_scene->get_state().next_scene_id]);
-
+        if (g_player_game_status == PLAYING)
+        {
+            update();
+        }
         render();
     }
 

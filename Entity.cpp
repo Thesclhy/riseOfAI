@@ -206,6 +206,7 @@ void const Entity::check_collision_y(Entity **collidable_entities, int collidabl
             }
             float y_distance = fabs(m_position.y - collidable_entity->m_position.y);
             float y_overlap = fabs(y_distance - (m_height / 2.0f) - (collidable_entity->m_height / 2.0f));
+            set_hitted(true);
             if (m_velocity.y > 0)
             {
                 m_position.y   -= y_overlap;

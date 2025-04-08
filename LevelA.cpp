@@ -103,7 +103,7 @@ void LevelA::initialise()
         RUNNER,                    // ai type
         WALKING                       // ai state
     );
-    m_game_state.enemy[0]->set_position(glm::vec3(14.0f, -6.0f, 0.0f));
+    m_game_state.enemy[0]->set_position(glm::vec3(16.0f, -6.0f, 0.0f));
 
     std::vector<std::vector<int>> checkpoint_animations =
     {
@@ -130,7 +130,7 @@ void LevelA::initialise()
         CHECKPOINT                     // entity type       
     );   
     m_game_state.checkpoint->set_player_state(REST);
-    m_game_state.checkpoint->set_position(glm::vec3(12.0f, 0.0f, 0.0f));
+    m_game_state.checkpoint->set_position(glm::vec3(12.0f, -5.0f, 0.0f));
     m_game_state.checkpoint->set_scale(glm::vec3(1.5f, 1.5f, 0.0f));
 
 

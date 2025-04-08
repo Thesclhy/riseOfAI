@@ -77,7 +77,7 @@ void LevelC::initialise()
         PLAYER,                    // entity type
         REST                       // player state
     );
-
+    //m_game_state.player->set_position(glm::vec3(4.0f, 0.0f, 0.0f));
     m_game_state.player->set_position(glm::vec3(4.0f, -20.0f, 0.0f));
     m_game_state.player->set_scale(glm::vec3(1.0f, 1.0f, 0.0f));
 
@@ -186,7 +186,7 @@ void LevelC::initialise()
 void LevelC::update(float delta_time)
 {
     if (m_game_state.checkpoint->get_hitted()) {
-        m_game_state.next_scene_id = 0;
+        m_game_state.next_scene_id = 4;
     }
     m_game_state.player->update(delta_time, m_game_state.player, m_game_state.enemy, ENEMY_AMOUNT,
         m_game_state.map);

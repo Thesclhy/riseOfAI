@@ -62,7 +62,7 @@ void Effects::update(float delta_time)
 
     case FADEIN:
         m_alpha -= delta_time * m_effect_speed;
-        if (m_alpha <= 0) m_current_effect = NONE;
+         if (m_alpha <= 0) m_current_effect = NONE;
 
         break;
 
